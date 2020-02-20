@@ -3,7 +3,7 @@ const db = require('megadb');
 let game = new db.crearDB('games');
 
 //const {error} = require('../../files/logs.js');
-const {success, fail} = require('../extras/embeds.js');
+const {success, fail} = require('../../files/embeds.js');
 
 module.exports = {
     name: 'ruleta-apuesta',
