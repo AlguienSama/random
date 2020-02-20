@@ -23,7 +23,7 @@ let game = new db.crearDB('games');
 
 
 //const {error} = require('../../files/logs.js');
-const {success, fail} = require('../extras/embeds.js');
+const {success, fail} = require('../../files/embeds.js');
 
 module.exports = {
     name: 'roulette',
@@ -38,12 +38,15 @@ module.exports = {
         //let moneda = await bank.get(`${message.guild.id}.moneda`);
         let moneda = " # ";
 
-        let even = {'par': ['par', 'even'], 'impar': ['impar', 'odden']};
+        let pares = {'par': ['par', 'even'], 'impar': ['impar', 'odden']};
+        let mitad = {'1-18': ['1-18'], '19-36':['19-36']};
         let trio = {'1st': ['1st', '1-12'], '2nd': ['2nd', '13-24'], '3rd': ['3rd', '25-36']};
+        let fila = {'r1': ['r1','f1'], 'r2': ['r2','f2'], 'r3': ['r3','f3']};
         let color = {'rojo': ['red', 'rojo'], 'negro': ['black', 'negro']};
 
         if (!args[0] || args[0] === "help") {
-            let msg = `Pleno: 0 al 37\nParidad: ${await keysA(even)}\nDocenas: ${await keysA(trio)}\nColor: ${await keysA(color)}`;
+            let msg = `Pleno: 0 al 37\nParidad: ${await keysA(pares)}\nMitades: ${await keysA(mitad)}
+            Docenas: ${await keysA(trio)}\nFilas: ${await keysA(fila)}\nColor: ${await keysA(color)}`;
             return message.channel.send(await success(message, msg))
         }
         if (!args[1]) return message.channel.send(await fail(message, "No has introducido nada!"));
@@ -52,12 +55,13 @@ module.exports = {
         let bet = parseInt(args.shift());
         if (bet < 100 && bet > 300000)
             return message.channel.send(await fail(message, "Debes de apostar entre **100** "+moneda+" y **300.000** "+moneda));
-        let argsS = args.toString();
-        console.log(args);
+        let argsS = ","+args.toString();
         console.log(argsS);
 
-        even = opt(even, argsS);
+        pares = opt(pares, argsS);
+        mitad = opt(mitad, argsS);
         trio = opt(trio, argsS);
+        fila = opt(fila, argsS);
         color = opt(color, argsS);
 
         let num = [];
@@ -68,28 +72,28 @@ module.exports = {
             }
         }
 
-        let totalAmount = num.length+even.length+trio.length+color.length;
+        let totalAmount = num.length+pares.length+mitad.length+trio.length+fila.length+color.length;
 
         if (totalAmount === 0)
             return message.channel.send(await fail(message, "Debes de apostar algo!"));
 
         let betTotal = bet*totalAmount;
 
-        console.log(even, trio, color, num);
+        console.log("Pares => "+pares+"\nMitades => "+mitad+"\nTrios => "+trio+"\nFilas => "+fila+"\nColores => "+color+"\nNums => "+num);
 
         if (!game.has(`roulette.${message.channel.id}.time`) || await game.get(`roulette.${message.channel.id}.time`)<message.createdAt.getTime())
             await game.set(`roulette.${message.channel.id}.time`, message.createdAt.getTime()+300000).catch(err => console.log("1 => "+err));
 
-        let apuesta = game.has(`roulette.${message.channel.id}.bets.bet0`) ? await game.keys(`roulette.${message.channel.id}.bets`) : 0;
+        let apuesta = game.has(`roulette.${message.channel.id}.bets.bet0`) ? await game.size(`roulette.${message.channel.id}.bets`) : 0;
+
         await game.set(`roulette.${message.channel.id}.bets.bet${apuesta}`,
-            {user: message.author.id, bet: bet, num: num, even: even, trio: trio, color: color}).catch(err => console.log("2 => "+err));
+            {user: message.author.id, bet: bet, num: num, par: pares, mitad: mitad, trio: trio, fila:fila, color: color}).catch(err => console.log("2 => "+err));
 
-        let msg = strArray(num) +" "+ strArray(even) +" "+ strArray(trio) +" "+ strArray(color);
+        let msg = "["+strArray(num) +"] ["+ strArray(pares) +"] ["+ strArray(mitad) +"] ["+ strArray(trio) +"] ["+ strArray(fila) +"] ["+ strArray(color) +"]";
+
         let lastTime = (await game.obtener(`roulette.${message.channel.id}.time`)-message.createdAt.getTime())/1000;
-
         const minutes = pad(Math.floor((lastTime % 3600) / 60), 2);
-        const seconds = pad(lastTime % 60, 2);
-
+        const seconds = pad(Math.floor(lastTime % 60), 2);
         let result = minutes + " minutos y " + seconds + " segundos";
 
         return message.channel.send(await success(message, "Apostados ``"+bet+"``<a:lain:668781874986090496> a ``"+msg+"``\n" +
@@ -100,7 +104,7 @@ module.exports = {
 
 function strArray(array) {
     if (array.length > 1)
-        return "["+array.join(" ")+"] ";
+        return array.join(" ");
     else if (array.length === 1)
         return array[0];
     else
