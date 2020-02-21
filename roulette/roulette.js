@@ -23,7 +23,8 @@ let game = new db.crearDB('games');
 
 
 //const {error} = require('../../files/logs.js');
-const {success, fail} = require('../../files/embeds.js');
+//const {success, fail} = require('../../files/embeds.js');
+const {success, fail} = require('../extras/embeds.js');
 
 module.exports = {
     name: 'roulette',

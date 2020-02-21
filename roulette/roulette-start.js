@@ -1,10 +1,10 @@
 const Discord = require('discord.js');
 const db = require('megadb');
 let game = new db.crearDB('games');
-let client = new Discord.Client();
 
 //const {error} = require('../../files/logs.js');
-const {success, fail} = require('../../files/embeds.js');
+//const {success, fail} = require('../../files/embeds.js');
+const {success, fail} = require('../extras/embeds.js');
 
 module.exports = {
     name: 'ruleta-start',
@@ -29,13 +29,13 @@ module.exports = {
         if (message.author.id !== lider)
             return message.channel.send(await fail(message, "Solo el creador de la partida puede empezarla!"));
 
-        await start(message).then(async () => {
+        await start(message.client, message.channel.id).then(async () => {
             //await game.delete(`roulette.${message.channel.id}`)
         })
     }
 };
 
-async function start(message) {
+async function start(client, channel) {
 
     let num = Math.floor(Math.random() * 37);
     let par = num % 2 === 0 ? "par" : num !== 0 ? "impar" : 0;
@@ -45,7 +45,7 @@ async function start(message) {
     let color = num > 0 && num < 11 && num % 2 === 1 || num > 10 && num < 19 && num % 2 === 0 ||
     num > 18 && num < 29 && num % 2 === 1 || num > 28 && num < 37 && num % 2 === 0 ? 'rojo' : num !== 0 ? 'negro' : 0;
 
-    let ap = await game.get(`roulette.${message.channel.id}.bets`);
+    let ap = await game.get(`roulette.${channel}.bets`);
 
     console.log(num, par, mitad, trio, fila, color);
 
@@ -97,7 +97,7 @@ async function start(message) {
         if (bet === obj["bet"])
             bet = 0;
         if (bet !== 0)
-            ganadores+=`<@${obj["user"]}>\t => ***${bet}***  [**${motive.join("** | **")}**]\n`;
+            ganadores+=`<@${obj["user"]}>\t => ***${bet}*** : [**${motive.join("** | **")}**]\n`;
         console.log(obj["user"]+" -- BET Total"+ bet);
     }
 
@@ -105,5 +105,6 @@ async function start(message) {
         .setTitle("RULETA!")
         .addField("RESULTADOS", msg)
         .addField("GANADORES", ganadores);
-    await message.channel.send(embed);
+
+    await client.channels.get(channel).send(embed);
 }
